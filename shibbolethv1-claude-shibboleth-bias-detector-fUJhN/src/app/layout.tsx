@@ -32,16 +32,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body
-        className="antialiased bg-[#0D0D0D] text-white min-h-screen font-sans"
-      >
+      <body className="antialiased bg-[#0a0a0a] text-white min-h-screen">
         <Header />
         <main className="min-h-[calc(100vh-65px)]">
           {children}
         </main>
-        <footer className="border-t border-zinc-800 py-8 text-center text-zinc-500 text-sm">
-          <p>A <a href="https://covenantlabs.ai" className="text-blue-400 hover:text-blue-300">Covenant Labs</a> Experiment</p>
-          <p className="mt-2 font-mono text-xs italic">&quot;Not your models, not your mind.&quot;</p>
+        <footer className="border-t border-zinc-800 py-8">
+          <div className="max-w-4xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs text-zinc-600">©2025</span>
+              <a 
+                href="https://covenantlabs.ai" 
+                className="font-mono text-xs text-zinc-500 hover:text-sky-400 transition-colors"
+              >
+                COVENANT LABS
+              </a>
+            </div>
+            <div className="font-mono text-xs text-zinc-700 italic">
+              &ldquo;Not your models, not your mind.&rdquo;
+            </div>
+          </div>
         </footer>
       </body>
     </html>

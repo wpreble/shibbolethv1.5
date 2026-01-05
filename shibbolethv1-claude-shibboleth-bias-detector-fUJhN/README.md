@@ -1,7 +1,5 @@
 # SHIBBOLETH
 
-> *"The word that reveals allegiance"*
-
 **AI Bias Detector** — Expose the hidden biases embedded in frontier AI models.
 
 A [Covenant Labs](https://covenantlabs.ai) Experiment

@@ -13,43 +13,81 @@ export default function ResultsGrid({ results, animate = false }: ResultsGridPro
   const disagreementScore = calculateDisagreementScore(results);
   const goodCount = results.filter(r => r.verdict === 'GOOD').length;
   const badCount = results.filter(r => r.verdict === 'BAD').length;
+  const refusedCount = results.filter(r => r.verdict === 'REFUSED').length;
 
-  let disagreementText = '';
-  if (disagreementScore === 0) {
-    disagreementText = 'All models agree';
-  } else if (disagreementScore === 1) {
-    disagreementText = '1 of 4 models differ';
-  } else if (disagreementScore === 2) {
-    disagreementText = 'Even split - 2/2';
-  } else {
-    disagreementText = `${disagreementScore} of 4 models differ`;
+  let statusCode = 'CONSENSUS';
+  let statusColor = 'text-green-500';
+  
+  if (disagreementScore === 2) {
+    statusCode = 'SPLIT_DECISION';
+    statusColor = 'text-amber-500';
+  } else if (disagreementScore >= 1) {
+    statusCode = 'PARTIAL_AGREEMENT';
+    statusColor = 'text-sky-500';
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto">
+      {/* Output header */}
+      <div className="mb-6 flex items-center justify-between px-1">
+        <span className="font-mono text-xs text-zinc-600">// model_responses</span>
+        <span className={`font-mono text-xs ${statusColor}`}>
+          STATUS: {statusCode}
+        </span>
+      </div>
+
       {/* Results grid */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        {results.map((result) => (
-          <VerdictCard key={result.model} result={result} animate={animate} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {results.map((result, index) => (
+          <VerdictCard key={result.model} result={result} animate={animate} index={index} />
         ))}
       </div>
 
-      {/* Disagreement summary */}
-      <div className="text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 rounded-full border border-zinc-800">
-          <span className="text-sm text-zinc-400">Disagreement:</span>
-          <span className="text-sm font-medium text-white">{disagreementText}</span>
+      {/* Analysis summary */}
+      <div className="mt-8 border border-zinc-800 bg-zinc-950">
+        <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-900/50">
+          <span className="font-mono text-xs text-zinc-500">ANALYSIS SUMMARY</span>
         </div>
-
-        {/* Visual breakdown */}
-        <div className="flex justify-center gap-4 mt-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-sm text-zinc-400">GOOD: {goodCount}</span>
+        
+        <div className="p-4 space-y-4">
+          {/* Progress bar visualization */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs text-zinc-500">GOOD vs BAD</span>
+              <span className="font-mono text-xs text-zinc-500">{goodCount}/{badCount}</span>
+            </div>
+            <div className="h-2 bg-zinc-900 flex overflow-hidden">
+              <div 
+                className="bg-green-500 transition-all duration-500"
+                style={{ width: `${(goodCount / 4) * 100}%` }}
+              />
+              <div 
+                className="bg-red-500 transition-all duration-500"
+                style={{ width: `${(badCount / 4) * 100}%` }}
+              />
+              {refusedCount > 0 && (
+                <div 
+                  className="bg-amber-500 transition-all duration-500"
+                  style={{ width: `${(refusedCount / 4) * 100}%` }}
+                />
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-sm text-zinc-400">BAD: {badCount}</span>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-3 gap-4 pt-2">
+            <div className="text-center">
+              <div className="font-mono text-2xl text-green-400">{goodCount}</div>
+              <div className="font-mono text-xs text-zinc-600">GOOD</div>
+            </div>
+            <div className="text-center">
+              <div className="font-mono text-2xl text-red-400">{badCount}</div>
+              <div className="font-mono text-xs text-zinc-600">BAD</div>
+            </div>
+            <div className="text-center">
+              <div className="font-mono text-2xl text-zinc-400">{disagreementScore}</div>
+              <div className="font-mono text-xs text-zinc-600">DISSENT</div>
+            </div>
           </div>
         </div>
       </div>
