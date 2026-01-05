@@ -6,10 +6,15 @@ import ResultsGrid from '@/components/ResultsGrid';
 import TopicList from '@/components/TopicList';
 import ShareButtons from '@/components/ShareButtons';
 import ApiKeyInput from '@/components/ApiKeyInput';
-import { QueryResult, QuerySummary } from '@/types';
+import ModelSelector from '@/components/ModelSelector';
+import QueryHistory from '@/components/QueryHistory';
+import { QueryResult, QuerySummary, ModelConfig } from '@/types';
+import { MODELS } from '@/lib/constants';
 import Link from 'next/link';
 
 const API_KEY_STORAGE_KEY = 'shibboleth_openrouter_key';
+const QUERY_HISTORY_KEY = 'shibboleth_query_history';
+const SELECTED_MODELS_KEY = 'shibboleth_selected_models';
 
 // Mock controversial topics for initial display (when no DB)
 const mockControversialTopics: QuerySummary[] = [
@@ -64,12 +69,39 @@ export default function Home() {
   const [result, setResult] = useState<QueryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState('');
+  const [selectedModels, setSelectedModels] = useState<ModelConfig[]>(MODELS);
+  const [queryHistory, setQueryHistory] = useState<QueryResult[]>([]);
 
-  // Load API key from localStorage on mount
+  // Load data from localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem(API_KEY_STORAGE_KEY);
-    if (stored) {
-      setApiKey(stored);
+    const storedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+    if (storedKey) {
+      setApiKey(storedKey);
+    }
+
+    const storedHistory = localStorage.getItem(QUERY_HISTORY_KEY);
+    if (storedHistory) {
+      try {
+        setQueryHistory(JSON.parse(storedHistory));
+      } catch (e) {
+        console.error('Failed to parse query history:', e);
+      }
+    }
+
+    const storedModels = localStorage.getItem(SELECTED_MODELS_KEY);
+    if (storedModels) {
+      try {
+        const parsedModels = JSON.parse(storedModels);
+        // Validate that stored models still exist in MODELS array
+        const validModels = parsedModels.filter((pm: ModelConfig) =>
+          MODELS.some(m => m.id === pm.id)
+        );
+        if (validModels.length > 0) {
+          setSelectedModels(validModels);
+        }
+      } catch (e) {
+        console.error('Failed to parse selected models:', e);
+      }
     }
   }, []);
 
@@ -79,6 +111,31 @@ export default function Home() {
       localStorage.setItem(API_KEY_STORAGE_KEY, key);
     } else {
       localStorage.removeItem(API_KEY_STORAGE_KEY);
+    }
+  };
+
+  const handleModelSelectionChange = (models: ModelConfig[]) => {
+    setSelectedModels(models);
+    localStorage.setItem(SELECTED_MODELS_KEY, JSON.stringify(models));
+  };
+
+  const addToHistory = (queryResult: QueryResult) => {
+    const newHistory = [queryResult, ...queryHistory.filter(q => q.topic !== queryResult.topic)].slice(0, 50);
+    setQueryHistory(newHistory);
+    localStorage.setItem(QUERY_HISTORY_KEY, JSON.stringify(newHistory));
+  };
+
+  const clearHistory = () => {
+    setQueryHistory([]);
+    localStorage.removeItem(QUERY_HISTORY_KEY);
+  };
+
+  const handleHistoryQueryClick = (topic: string) => {
+    // Find the query in history and set it as the current result
+    const query = queryHistory.find(q => q.topic === topic);
+    if (query) {
+      setResult(query);
+      window.history.pushState({}, '', `/query/${encodeURIComponent(topic)}`);
     }
   };
 
@@ -97,7 +154,11 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ topic, apiKey }),
+        body: JSON.stringify({
+          topic,
+          apiKey,
+          selectedModels: selectedModels.map(m => m.id),
+        }),
       });
 
       const data = await response.json();
@@ -107,6 +168,7 @@ export default function Home() {
       }
 
       setResult(data);
+      addToHistory(data);
 
       // Update URL without full navigation for shareability
       window.history.pushState({}, '', `/query/${encodeURIComponent(topic)}`);
@@ -147,11 +209,22 @@ export default function Home() {
 
       {/* Query Section */}
       <div className="px-4 pb-12">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-4">
           <ApiKeyInput
             apiKey={apiKey}
             onApiKeyChange={handleApiKeyChange}
           />
+          <ModelSelector
+            selectedModels={selectedModels}
+            onSelectionChange={handleModelSelectionChange}
+          />
+          {queryHistory.length > 0 && (
+            <QueryHistory
+              queries={queryHistory}
+              onClear={clearHistory}
+              onQueryClick={handleHistoryQueryClick}
+            />
+          )}
           <QueryInput
             onSubmit={handleQuery}
             isLoading={isLoading}

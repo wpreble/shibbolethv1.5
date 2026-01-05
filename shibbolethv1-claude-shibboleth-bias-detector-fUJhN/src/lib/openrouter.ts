@@ -65,7 +65,8 @@ async function queryModel(
  */
 export async function queryAllModels(
   topic: string,
-  apiKey?: string
+  apiKey?: string,
+  selectedModelIds?: string[]
 ): Promise<ModelResult[]> {
   const key = apiKey || process.env.OPENROUTER_API_KEY;
 
@@ -73,7 +74,12 @@ export async function queryAllModels(
     throw new Error('OpenRouter API key is required');
   }
 
-  const promises = MODELS.map(async (model): Promise<ModelResult> => {
+  // Filter models based on selection, or use all models if no selection
+  const modelsToQuery = selectedModelIds && selectedModelIds.length > 0
+    ? MODELS.filter(m => selectedModelIds.includes(m.id))
+    : MODELS;
+
+  const promises = modelsToQuery.map(async (model): Promise<ModelResult> => {
     try {
       const { response, latencyMs } = await queryModel(
         model.openRouterId,
@@ -108,8 +114,8 @@ export async function queryAllModels(
       return result.value;
     }
     return {
-      model: MODELS[index].id,
-      modelName: MODELS[index].name,
+      model: modelsToQuery[index].id,
+      modelName: modelsToQuery[index].name,
       verdict: 'ERROR' as Verdict,
       latencyMs: 0,
       rawResponse: result.reason?.message || 'Unknown error',

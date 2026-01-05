@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { topic, apiKey } = body;
+    const { topic, apiKey, selectedModels } = body;
 
     if (!topic || typeof topic !== 'string') {
       return NextResponse.json(
@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for cached results if no custom API key
-    if (!apiKey) {
+    // Check for cached results if no custom API key and using default models
+    if (!apiKey && !selectedModels) {
       const cached = await getQueryByTopic(sanitized);
       if (cached) {
         // Return cached results
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Query all models
-    const results = await queryAllModels(sanitized, apiKey);
+    // Query all models (with optional custom model selection)
+    const results = await queryAllModels(sanitized, apiKey, selectedModels);
 
     // Save to database (only if using server API key)
     let queryId = '';

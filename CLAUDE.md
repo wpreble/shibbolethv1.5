@@ -68,7 +68,9 @@ shibbolethv1.5/
         │   ├── Header.tsx              # Site navigation
         │   ├── TopicList.tsx           # Query list display
         │   ├── LoadingSpinner.tsx      # Loading indicator
-        │   └── ShareButtons.tsx        # Social sharing
+        │   ├── ShareButtons.tsx        # Social sharing
+        │   ├── ModelSelector.tsx       # Model selection component
+        │   └── QueryHistory.tsx        # Local query history display
         ├── lib/                        # Utilities & helpers
         │   ├── constants.ts            # App configuration
         │   ├── openrouter.ts           # AI API client
@@ -982,9 +984,131 @@ Add AI model query parallelization
 
 ---
 
+## New Features (v1.6)
+
+### 1. Query History (Local Browser Storage)
+
+Users can now see their query history on the main page, stored locally in the browser using LocalStorage.
+
+**Implementation**:
+- **Component**: `QueryHistory.tsx`
+- **Storage Key**: `shibboleth_query_history`
+- **Max Queries**: 50 (most recent)
+- **Features**:
+  - View past queries with verdict dots
+  - Quick stats (GOOD/BAD/REFUSED counts)
+  - Disagreement level indicator
+  - Click to reload past query results
+  - Clear all history button
+
+**LocalStorage Structure**:
+```typescript
+localStorage.setItem('shibboleth_query_history', JSON.stringify([
+  {
+    id: string,
+    topic: string,
+    results: ModelResult[],
+    disagreementScore: number,
+    // ...
+  }
+]))
+```
+
+### 2. Model Selection
+
+Users can now select which models to query (1-4 models) instead of being locked to all 4 default models.
+
+**Implementation**:
+- **Component**: `ModelSelector.tsx`
+- **Storage Key**: `shibboleth_selected_models`
+- **Default**: All 4 models (Claude, GPT, Gemini, Grok)
+- **Features**:
+  - Checkbox-style selection interface
+  - Visual indicators for selected models
+  - Minimum 1 model, maximum 4 models
+  - Persists selection across sessions
+  - Collapsible UI to save space
+
+**API Changes**:
+- `/api/query` now accepts `selectedModels` parameter (array of model IDs)
+- `queryAllModels()` function updated to filter models based on selection
+- Caching disabled when using custom model selection
+
+**Future Integration**:
+- Placeholder for custom OpenRouter models (any model from the OpenRouter catalog)
+- Placeholder for Covenant Labs Conduit integration (test your own models)
+
+### 3. Expandable Full Response Text
+
+When models don't respond with binary GOOD/BAD, users can now click to expand and view the full response text.
+
+**Implementation**:
+- **Component**: `VerdictCard.tsx` (enhanced)
+- **Features**:
+  - Auto-detects non-binary responses
+  - "Show full response" / "Hide full response" button
+  - Collapsible with smooth transitions
+  - Preserves whitespace and line breaks
+  - Chevron icons for visual feedback
+
+**Logic**:
+```typescript
+const isNonBinary = result.rawResponse &&
+  result.rawResponse.trim().toUpperCase() !== 'GOOD' &&
+  result.rawResponse.trim().toUpperCase() !== 'BAD';
+
+const hasExpandableContent = isNonBinary &&
+  result.rawResponse &&
+  result.rawResponse.length > 50;
+```
+
+### 4. Updated Component Patterns
+
+**State Management** (page.tsx):
+```typescript
+const [selectedModels, setSelectedModels] = useState<ModelConfig[]>(MODELS);
+const [queryHistory, setQueryHistory] = useState<QueryResult[]>([]);
+
+// Load from localStorage on mount
+useEffect(() => {
+  const storedModels = localStorage.getItem(SELECTED_MODELS_KEY);
+  const storedHistory = localStorage.getItem(QUERY_HISTORY_KEY);
+  // Parse and validate stored data
+}, []);
+
+// Save to localStorage on change
+const handleModelSelectionChange = (models: ModelConfig[]) => {
+  setSelectedModels(models);
+  localStorage.setItem(SELECTED_MODELS_KEY, JSON.stringify(models));
+};
+```
+
+**Query Submission**:
+```typescript
+const response = await fetch('/api/query', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    topic,
+    apiKey,
+    selectedModels: selectedModels.map(m => m.id), // New parameter
+  }),
+});
+```
+
+---
+
 ## Changelog
 
-### v1.5 (Current)
+### v1.6 (Current)
+- **NEW**: Local query history on main page (browser storage)
+- **NEW**: Model selection UI (choose 1-4 models to query)
+- **NEW**: Expandable full response text for non-binary verdicts
+- **ENHANCED**: VerdictCard with collapsible response viewer
+- **ENHANCED**: API supports custom model selection
+- **FUTURE**: Scaffolding for custom OpenRouter models + Covenant Labs Conduit
+
+### v1.5
 - Updated UI with bias detection tool improvements
 - Enhanced terminal aesthetic
 - Improved results grid display
