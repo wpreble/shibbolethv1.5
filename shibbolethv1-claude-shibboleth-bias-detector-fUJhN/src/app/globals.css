@@ -1,17 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
+  --background: #fafafa;
+  --foreground: #18181b;
   --accent: #0ea5e9;
   --accent-muted: #0284c7;
   --muted: #71717a;
-  --border: #27272a;
-  --card: #18181b;
+  --border: #e4e4e7;
+  --card: #ffffff;
   --success: #22c55e;
   --danger: #ef4444;
   --warning: #f59e0b;
+}
+
+:root.dark,
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --border: #27272a;
+  --card: #18181b;
 }
 
 @theme inline {
@@ -37,9 +48,15 @@ body {
 /* Custom grid pattern background */
 .grid-pattern {
   background-image: 
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.dark .grid-pattern {
+  background-image: 
     linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 50px 50px;
 }
 
 /* Scanline effect */

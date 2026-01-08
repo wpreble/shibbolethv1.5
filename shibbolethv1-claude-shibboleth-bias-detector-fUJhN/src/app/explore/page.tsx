@@ -9,6 +9,76 @@ import { Search, Filter, Download, TrendingUp, Flame } from 'lucide-react';
 
 type ViewType = 'search' | 'trending' | 'controversial';
 
+// Mock controversial topics for Habitus 2026 snapshot
+const habitusTopics: QuerySummary[] = [
+  {
+    id: '1',
+    topic: 'universal basic income',
+    category: 'economics',
+    queryCount: 42,
+    verdictDiversity: 2,
+    goodCount: 2,
+    badCount: 2,
+    refusedCount: 0,
+    results: [],
+  },
+  {
+    id: '2',
+    topic: 'cryptocurrency',
+    category: 'technology',
+    queryCount: 38,
+    verdictDiversity: 2,
+    goodCount: 3,
+    badCount: 1,
+    refusedCount: 0,
+    results: [],
+  },
+  {
+    id: '3',
+    topic: 'nuclear energy',
+    category: 'environment',
+    queryCount: 31,
+    verdictDiversity: 2,
+    goodCount: 2,
+    badCount: 2,
+    refusedCount: 0,
+    results: [],
+  },
+  {
+    id: '4',
+    topic: 'capitalism',
+    category: 'economics',
+    queryCount: 27,
+    verdictDiversity: 2,
+    goodCount: 2,
+    badCount: 2,
+    refusedCount: 0,
+    results: [],
+  },
+  {
+    id: '5',
+    topic: 'artificial intelligence regulation',
+    category: 'technology',
+    queryCount: 45,
+    verdictDiversity: 2,
+    goodCount: 1,
+    badCount: 3,
+    refusedCount: 0,
+    results: [],
+  },
+  {
+    id: '6',
+    topic: 'immigration',
+    category: 'politics',
+    queryCount: 56,
+    verdictDiversity: 2,
+    goodCount: 2,
+    badCount: 2,
+    refusedCount: 0,
+    results: [],
+  },
+];
+
 export default function ExplorePage() {
 
   const [viewType, setViewType] = useState<ViewType>('controversial');
@@ -76,14 +146,35 @@ export default function ExplorePage() {
   };
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-12">
+    <div className="container max-w-4xl mx-auto px-4 py-12 min-h-screen bg-zinc-50 dark:bg-[#0a0a0a]">
       {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Explore Database</h1>
-        <p className="text-zinc-400">
+        <h1 className="font-mono text-3xl font-bold mb-2 tracking-wider text-zinc-900 dark:text-white">EXPLORE DATABASE</h1>
+        <p className="text-zinc-500 dark:text-zinc-400">
           Search and browse all topics that have been judged by AI models
         </p>
       </div>
+
+      {/* Habitus 2026 Section */}
+      <div className="mb-12 border border-sky-500/30 bg-sky-500/5">
+        <div className="px-4 py-3 border-b border-sky-500/30 bg-sky-500/10">
+          <div className="flex items-center gap-2">
+            <Flame className="w-4 h-4 text-sky-500" />
+            <span className="font-mono text-sky-500 text-sm">Habitus 2026:</span>
+            <span className="font-mono text-sm text-zinc-900 dark:text-white tracking-wider">CONTROVERSIAL QUERIES</span>
+            <span className="font-mono text-xs text-zinc-400 dark:text-zinc-600">// cultural snapshot</span>
+          </div>
+        </div>
+        <div className="p-4">
+          <TopicList
+            topics={habitusTopics}
+            emptyMessage="No queries yet. Be the first to test an AI!"
+          />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-zinc-200 dark:border-zinc-800 mb-8" />
 
       {/* View Type Tabs */}
       <div className="flex justify-center gap-2 mb-8">

@@ -10,6 +10,8 @@ import { QueryResult } from '@/types';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
+const API_KEY_STORAGE_KEY = 'shibboleth_openrouter_key';
+
 export default function QueryResultPage() {
   const params = useParams();
   const router = useRouter();
@@ -20,7 +22,22 @@ export default function QueryResultPage() {
   const [result, setResult] = useState<QueryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const getApiKey = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(API_KEY_STORAGE_KEY) || '';
+    }
+    return '';
+  };
+
   const fetchResult = async (forceRefresh = false) => {
+    const apiKey = getApiKey();
+    
+    if (!apiKey) {
+      setError('Please set your OpenRouter API key on the home page');
+      setIsLoading(false);
+      return;
+    }
+
     if (forceRefresh) {
       setIsRefreshing(true);
     } else {
@@ -29,24 +46,13 @@ export default function QueryResultPage() {
     setError(null);
 
     try {
-      // First try to get cached result
-      if (!forceRefresh) {
-        const cachedResponse = await fetch(`/api/query?topic=${encodeURIComponent(topic)}`);
-        if (cachedResponse.ok) {
-          const cachedData = await cachedResponse.json();
-          setResult(cachedData);
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // If no cached result or force refresh, query the models
+      // Query the models with API key
       const response = await fetch('/api/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ topic, apiKey }),
       });
 
       const data = await response.json();

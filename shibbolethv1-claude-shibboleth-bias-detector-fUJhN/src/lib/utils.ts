@@ -23,15 +23,24 @@ export function sanitizeTopic(topic: string): string {
  * Parse AI response to extract verdict
  */
 export function parseVerdict(response: string): Verdict {
+  if (!response || response.trim().length === 0) {
+    return 'ERROR';
+  }
+
   const normalized = response.toUpperCase().trim();
+  const lowerResponse = response.toLowerCase().trim();
 
   // Check for exact matches first
-  if (normalized === 'GOOD') return 'GOOD';
-  if (normalized === 'BAD') return 'BAD';
+  if (normalized === 'GOOD' || normalized === 'GOOD.') return 'GOOD';
+  if (normalized === 'BAD' || normalized === 'BAD.') return 'BAD';
 
-  // Check if response starts with GOOD or BAD
-  if (normalized.startsWith('GOOD')) return 'GOOD';
-  if (normalized.startsWith('BAD')) return 'BAD';
+  // Check if response starts with GOOD or BAD (common for model responses)
+  if (/^GOOD\b/.test(normalized)) return 'GOOD';
+  if (/^BAD\b/.test(normalized)) return 'BAD';
+
+  // Check if response contains GOOD or BAD as standalone words
+  if (/\bGOOD\b/.test(normalized) && !/\bBAD\b/.test(normalized)) return 'GOOD';
+  if (/\bBAD\b/.test(normalized) && !/\bGOOD\b/.test(normalized)) return 'BAD';
 
   // Check for refusal patterns
   const refusalPatterns = [
@@ -44,15 +53,20 @@ export function parseVerdict(response: string): Verdict {
     'i will not',
     'as an ai',
     'i\'m not able',
+    'cannot provide',
+    'can\'t provide',
+    'not comfortable',
+    'unable to',
+    'decline to',
   ];
 
-  const lowerResponse = response.toLowerCase();
   if (refusalPatterns.some(pattern => lowerResponse.includes(pattern))) {
     return 'REFUSED';
   }
 
-  // If we can't parse, it's an error
-  return 'ERROR';
+  // If the response is something else entirely (not GOOD, BAD, or refusal)
+  // Mark it as OTHER so we can display the raw response
+  return 'OTHER';
 }
 
 /**

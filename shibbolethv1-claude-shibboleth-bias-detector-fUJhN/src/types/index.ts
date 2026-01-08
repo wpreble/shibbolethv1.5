@@ -1,6 +1,6 @@
 // Core types for Shibboleth AI Bias Detector
 
-export type Verdict = 'GOOD' | 'BAD' | 'REFUSED' | 'ERROR';
+export type Verdict = 'GOOD' | 'BAD' | 'REFUSED' | 'OTHER' | 'ERROR';
 
 export interface ModelConfig {
   id: string;

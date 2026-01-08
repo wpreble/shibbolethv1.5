@@ -16,6 +16,10 @@ interface OpenRouterResponse {
     completion_tokens: number;
     total_tokens: number;
   };
+  error?: {
+    message: string;
+    code?: string;
+  };
 }
 
 /**
@@ -42,7 +46,7 @@ async function queryModel(
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: topic },
       ],
-      max_tokens: 10,
+      max_tokens: 50,
       temperature: 0,
     }),
   });
@@ -51,11 +55,20 @@ async function queryModel(
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`[OpenRouter] Error for ${modelId}:`, errorText);
     throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
   }
 
   const data: OpenRouterResponse = await response.json();
-  const content = data.choices[0]?.message?.content || '';
+  
+  // Check for error in response body
+  if (data.error) {
+    console.error(`[OpenRouter] Response error for ${modelId}:`, data.error);
+    throw new Error(data.error.message || 'Unknown API error');
+  }
+  
+  const content = data.choices?.[0]?.message?.content || '';
+  console.log(`[OpenRouter] ${modelId} responded: "${content}"`);
 
   return { response: content, latencyMs };
 }
